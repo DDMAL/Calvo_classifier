@@ -96,7 +96,6 @@ class FastCalvoTrainer(RodanTask):
             # Create categorical ground-truth
             gt = {}
             regions_mask = (regions[:, :, 3] == 255)
-
             notes_mask = (notes[:, :, 3] == 255)
             gt['symbols'] = np.logical_and(notes_mask, regions_mask) # restrict layer to only the notes in the selected regions
             gt['background'] = (background[:, :, 3] == 255) # background is already restricted to the selected regions (based on Pixel.js' behaviour)
@@ -113,23 +112,21 @@ class FastCalvoTrainer(RodanTask):
             }
 
             # optional layers
-            try:
-                inputs['rgba PNG - Staff lines layer']
-                lines = cv2.imread(inputs['rgba PNG - Staff lines layer'][0]['resource_path'], cv2.IMREAD_UNCHANGED) # 4-channel
-                lines_mask = (lines[:, :, 3] == 255)
-                gt['staff'] = np.logical_and(lines_mask, regions_mask) # restrict layer to only the staff lines in the selected regions
-                output_models_path['staff'] = outputs['Staff Lines Model'][0]['resource_path']
-            except:
-                pass
+            for k, _ in inputs:
+                if k == 'rgba PNG - Staff lines layer': 
+                    lines = cv2.imread(inputs['rgba PNG - Staff lines layer'][0]['resource_path'], cv2.IMREAD_UNCHANGED) # 4-channel
+                    lines_mask = (lines[:, :, 3] == 255)
+                    gt['staff'] = np.logical_and(lines_mask, regions_mask) # restrict layer to only the staff lines in the selected regions
+                if k == 'rgba PNG - Text': 
+                    text = cv2.imread(inputs['rgba PNG - Text'][0]['resource_path'], cv2.IMREAD_UNCHANGED) # 4-channel
+                    text_mask = (text[:, :, 3] == 255)
+                    gt['text'] = np.logical_and(text_mask, regions_mask) # restrict layer to only the text in the selected regions
 
-            try:
-                inputs['rgba PNG - Text']
-                text = cv2.imread(inputs['rgba PNG - Text'][0]['resource_path'], cv2.IMREAD_UNCHANGED) # 4-channel
-                text_mask = (text[:, :, 3] == 255)
-                gt['text'] = np.logical_and(text_mask, regions_mask) # restrict layer to only the text in the selected regions
-                output_models_path['text'] = outputs['Text Model'][0]['resource_path']
-            except:
-                pass
+            for k, _ in outputs:
+                if k == 'staff':
+                    output_models_path['staff'] = outputs['Staff Lines Model'][0]['resource_path']
+                if k == 'text':
+                    output_models_path['text'] = outputs['Text Model'][0]['resource_path']
 
             # Call in training function
             status = training.train_msae(
