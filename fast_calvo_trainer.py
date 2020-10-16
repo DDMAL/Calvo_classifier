@@ -75,7 +75,7 @@ class FastCalvoTrainer(RodanTask):
     output_port_types = (
         {'name': 'Background Model', 'minimum': 1, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
         {'name': 'Log File', 'minimum': 1, 'maximum': 1, 'resource_types': ['text/plain']},
-        {'name': 'Arbitrary models', 'minimum': 1, 'maximum': 10, 'resource_types': ['keras/model+hdf5']},
+        {'name': 'Adjustable models', 'minimum': 1, 'maximum': 10, 'resource_types': ['keras/model+hdf5']},
     )
 
 
@@ -105,8 +105,11 @@ class FastCalvoTrainer(RodanTask):
             
             # Fail if arbitrary layers are not equal before training occurs.
             input_ports = len(inputs['rgba PNG - Layers'])
-            if len(outputs['Arbitrary models']) != input_ports:
-                raise Exception('The number of input layers "rgba PNG - Layers" does not match the number of output "Arbitrary models"')
+            if len(outputs['Adjustable models']) != input_ports:
+                raise Exception(
+                    'The number of input layers "rgba PNG - Layers" does not match the number of'
+                    ' output "Adjustable models"'
+                )
 
             # Create categorical ground-truth
             gt = {}
@@ -123,7 +126,7 @@ class FastCalvoTrainer(RodanTask):
                 file_obj = cv2.imread(inputs['rgba PNG - Layers'][i]['resource_path'], cv2.IMREAD_UNCHANGED)
                 file_mask = (file_obj[:, :, 3] == 255)
                 gt['%s' % i] = np.logical_and(file_mask, regions_mask)
-                output_models_path['%s' % i] = outputs['Arbitrary models'][i]['resource_path']
+                output_models_path['%s' % i] = outputs['Adjustable models'][i]['resource_path']
 
             # Call in training function
             status = training.train_msae(

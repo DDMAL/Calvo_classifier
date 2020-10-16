@@ -61,7 +61,7 @@ class FastCalvoClassifier(RodanTask):
     input_port_types = (
         {'name': 'Image', 'minimum': 1, 'maximum': 100, 'resource_types': lambda mime: mime.startswith('image/')},
         {'name': 'Background model', 'minimum': 1, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
-        {'name': 'Arbitrary models', 'minimum': 1, 'maximum': 10, 'resource_types': ['keras/model+hdf5']},
+        {'name': 'Adjustable models', 'minimum': 1, 'maximum': 10, 'resource_types': ['keras/model+hdf5']},
         # {'name': 'Symbol model', 'minimum': 1, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
         # # Optional
         # {'name': 'Staff-line model', 'minimum': 0, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
@@ -99,10 +99,10 @@ class FastCalvoClassifier(RodanTask):
             # Inner configuration
             mode = 'logical'
 
-            input_ports = len(inputs['Arbitrary models'])
+            input_ports = len(inputs['Adjustable models'])
             if len(outputs['Layers']) != input_ports:
                 raise Exception(
-                    'The number of input layers "Arbitrary models" does not match the number of'
+                    'The number of input layers "Adjustable models" does not match the number of'
                     ' output "Layers"'
                 )
 
@@ -113,7 +113,7 @@ class FastCalvoClassifier(RodanTask):
             model_paths = [background_model]
 
             for i in range(input_ports):
-                model_paths.append(inputs['Arbitrary models'][i]['resource_path'])
+                model_paths.append(inputs['Adjustable models'][i]['resource_path'])
 
             for idx, _ in enumerate(inputs['Image']):
                 # Process
