@@ -62,19 +62,11 @@ class FastCalvoClassifier(RodanTask):
         {'name': 'Image', 'minimum': 1, 'maximum': 100, 'resource_types': lambda mime: mime.startswith('image/')},
         {'name': 'Background model', 'minimum': 1, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
         {'name': 'Adjustable models', 'minimum': 1, 'maximum': 10, 'resource_types': ['keras/model+hdf5']},
-        # {'name': 'Symbol model', 'minimum': 1, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
-        # # Optional
-        # {'name': 'Staff-line model', 'minimum': 0, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
-        # {'name': 'Text model', 'minimum': 0, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
     )
     output_port_types = (
         {'name': 'Background', 'minimum': 1, 'maximum': 1, 'resource_types': ['image/rgba+png']},
         {'name': 'Layers', 'minimum': 1, 'maximum': 10, 'resource_types': ['image/rgba+png']},
         {'name': 'Log File', 'minimum': 0, 'maximum': 1, 'resource_types': ['text/plain']},
-        # {'name': 'Music symbol', 'minimum': 0, 'maximum': 100, 'resource_types': ['image/rgba+png']},
-        # # Optional
-        # {'name': 'Staff lines', 'minimum': 0, 'maximum': 100, 'resource_types': ['image/rgba+png']},
-        # {'name': 'Text', 'minimum': 0, 'maximum': 100, 'resource_types': ['image/rgba+png']},
     )
 
     """
