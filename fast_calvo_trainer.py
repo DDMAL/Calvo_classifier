@@ -69,13 +69,35 @@ class FastCalvoTrainer(RodanTask):
         {'name': 'Image', 'minimum': 1, 'maximum': 1, 'resource_types': ['image/rgb+png','image/rgb+jpg']},
         {'name': 'rgba PNG - Background layer', 'minimum': 1, 'maximum': 1, 'resource_types': ['image/rgba+png']},
         {'name': 'rgba PNG - Selected regions', 'minimum': 1, 'maximum': 1, 'resource_types': ['image/rgba+png']},
-        {'name': 'rgba PNG - Layers', 'minimum': 1, 'maximum': 10, 'resource_types': ['image/rgba+png']},
+        # We did not go this route because it would be more difficult for the user to track layers
+        # {'name': 'rgba PNG - Layers', 'minimum': 1, 'maximum': 10, 'resource_types': ['image/rgba+png']},
+        {'name': 'rgba PNG - Layer 0', 'minimum': 1, 'maximum': 1, 'resource_types': ['image/rgba+png']},
+        {'name': 'rgba PNG - Layer 1', 'minimum': 0, 'maximum': 1, 'resource_types': ['image/rgba+png']},
+        {'name': 'rgba PNG - Layer 2', 'minimum': 0, 'maximum': 1, 'resource_types': ['image/rgba+png']},
+        {'name': 'rgba PNG - Layer 3', 'minimum': 0, 'maximum': 1, 'resource_types': ['image/rgba+png']},
+        {'name': 'rgba PNG - Layer 4', 'minimum': 0, 'maximum': 1, 'resource_types': ['image/rgba+png']},
+        {'name': 'rgba PNG - Layer 5', 'minimum': 0, 'maximum': 1, 'resource_types': ['image/rgba+png']},
+        {'name': 'rgba PNG - Layer 6', 'minimum': 0, 'maximum': 1, 'resource_types': ['image/rgba+png']},
+        {'name': 'rgba PNG - Layer 7', 'minimum': 0, 'maximum': 1, 'resource_types': ['image/rgba+png']},
+        {'name': 'rgba PNG - Layer 8', 'minimum': 0, 'maximum': 1, 'resource_types': ['image/rgba+png']},
+        {'name': 'rgba PNG - Layer 9', 'minimum': 0, 'maximum': 1, 'resource_types': ['image/rgba+png']},
     )
 
     output_port_types = (
         {'name': 'Background Model', 'minimum': 1, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
         {'name': 'Log File', 'minimum': 1, 'maximum': 1, 'resource_types': ['text/plain']},
-        {'name': 'Adjustable models', 'minimum': 1, 'maximum': 10, 'resource_types': ['keras/model+hdf5']},
+        # We did not go this route because it would be more difficult for the user to track layers
+        # {'name': 'Adjustable models', 'minimum': 1, 'maximum': 10, 'resource_types': ['keras/model+hdf5']},
+        {'name': 'Model 0', 'minimum': 1, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
+        {'name': 'Model 1', 'minimum': 0, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
+        {'name': 'Model 2', 'minimum': 0, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
+        {'name': 'Model 3', 'minimum': 0, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
+        {'name': 'Model 4', 'minimum': 0, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
+        {'name': 'Model 5', 'minimum': 0, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
+        {'name': 'Model 6', 'minimum': 0, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
+        {'name': 'Model 7', 'minimum': 0, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
+        {'name': 'Model 8', 'minimum': 0, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
+        {'name': 'Model 9', 'minimum': 0, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
     )
 
 
@@ -104,11 +126,13 @@ class FastCalvoTrainer(RodanTask):
             regions = cv2.imread(inputs['rgba PNG - Selected regions'][0]['resource_path'], cv2.IMREAD_UNCHANGED) # 4-channel
             
             # Fail if arbitrary layers are not equal before training occurs.
-            input_ports = len(inputs['rgba PNG - Layers'])
-            if len(outputs['Adjustable models']) != input_ports:
+            input_ports = len([x for x in inputs if x[:-1] == 'rgba PNG - Layer '])
+            output_ports = len([x for x in outputs if x[:5] == 'Model'])
+            if input_ports != output_ports:
                 raise Exception(
                     'The number of input layers "rgba PNG - Layers" does not match the number of'
-                    ' output "Adjustable models"'
+                    ' output "Adjustable models"\n'
+                    'input_ports: %d output_ports: %d' % (input_ports, output_ports)
                 )
 
             # Create categorical ground-truth
@@ -123,10 +147,10 @@ class FastCalvoTrainer(RodanTask):
 
             # Populate remaining inputs and outputs
             for i in range(input_ports):
-                file_obj = cv2.imread(inputs['rgba PNG - Layers'][i]['resource_path'], cv2.IMREAD_UNCHANGED)
+                file_obj = cv2.imread(inputs['rgba PNG - Layer %d' % i][0]['resource_path'], cv2.IMREAD_UNCHANGED)
                 file_mask = (file_obj[:, :, 3] == 255)
                 gt['%s' % i] = np.logical_and(file_mask, regions_mask)
-                output_models_path['%s' % i] = outputs['Adjustable models'][i]['resource_path']
+                output_models_path['%s' % i] = outputs['Model %d' % i][0]['resource_path']
 
             # Call in training function
             status = training.train_msae(

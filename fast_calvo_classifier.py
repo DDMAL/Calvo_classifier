@@ -61,12 +61,34 @@ class FastCalvoClassifier(RodanTask):
     input_port_types = (
         {'name': 'Image', 'minimum': 1, 'maximum': 100, 'resource_types': lambda mime: mime.startswith('image/')},
         {'name': 'Background model', 'minimum': 1, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
-        {'name': 'Adjustable models', 'minimum': 1, 'maximum': 10, 'resource_types': ['keras/model+hdf5']},
+        # We did not go this route because it would be more difficult for the user to track layers.
+        # {'name': 'Adjustable models', 'minimum': 1, 'maximum': 10, 'resource_types': ['keras/model+hdf5']},
+        {'name': 'Model 0', 'minimum': 1, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
+        {'name': 'Model 1', 'minimum': 0, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
+        {'name': 'Model 2', 'minimum': 0, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
+        {'name': 'Model 3', 'minimum': 0, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
+        {'name': 'Model 4', 'minimum': 0, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
+        {'name': 'Model 5', 'minimum': 0, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
+        {'name': 'Model 6', 'minimum': 0, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
+        {'name': 'Model 7', 'minimum': 0, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
+        {'name': 'Model 8', 'minimum': 0, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
+        {'name': 'Model 9', 'minimum': 0, 'maximum': 1, 'resource_types': ['keras/model+hdf5']},
     )
     output_port_types = (
-        {'name': 'Background', 'minimum': 1, 'maximum': 1, 'resource_types': ['image/rgba+png']},
-        {'name': 'Layers', 'minimum': 1, 'maximum': 10, 'resource_types': ['image/rgba+png']},
         {'name': 'Log File', 'minimum': 0, 'maximum': 1, 'resource_types': ['text/plain']},
+        {'name': 'Background', 'minimum': 1, 'maximum': 1, 'resource_types': ['image/rgba+png']},
+        # We did not go this route because it would be more difficult for the user to track layers
+        # {'name': 'Layers', 'minimum': 1, 'maximum': 10, 'resource_types': ['image/rgba+png']},
+        {'name': 'Layer 0', 'minimum': 1, 'maximum': 1, 'resource_types': ['image/rgba+png']},
+        {'name': 'Layer 1', 'minimum': 0, 'maximum': 1, 'resource_types': ['image/rgba+png']},
+        {'name': 'Layer 2', 'minimum': 0, 'maximum': 1, 'resource_types': ['image/rgba+png']},
+        {'name': 'Layer 3', 'minimum': 0, 'maximum': 1, 'resource_types': ['image/rgba+png']},
+        {'name': 'Layer 4', 'minimum': 0, 'maximum': 1, 'resource_types': ['image/rgba+png']},
+        {'name': 'Layer 5', 'minimum': 0, 'maximum': 1, 'resource_types': ['image/rgba+png']},
+        {'name': 'Layer 6', 'minimum': 0, 'maximum': 1, 'resource_types': ['image/rgba+png']},
+        {'name': 'Layer 7', 'minimum': 0, 'maximum': 1, 'resource_types': ['image/rgba+png']},
+        {'name': 'Layer 8', 'minimum': 0, 'maximum': 1, 'resource_types': ['image/rgba+png']},
+        {'name': 'Layer 9', 'minimum': 0, 'maximum': 1, 'resource_types': ['image/rgba+png']},
     )
 
     """
@@ -91,11 +113,12 @@ class FastCalvoClassifier(RodanTask):
             # Inner configuration
             mode = 'logical'
 
-            input_ports = len(inputs['Adjustable models'])
-            if len(outputs['Layers']) != input_ports:
+            input_ports = len([x for x in outputs if x[:5] == 'Model'])
+            output_ports = len([x for x in inputs if x[:5] == 'Layer'])
+            if input_ports != output_ports:
                 raise Exception(
-                    'The number of input layers "Adjustable models" does not match the number of'
-                    ' output "Layers"'
+                    'The number of input layers "Model" does not match the number of'
+                    ' output "Layer"'
                 )
 
             # Ports
@@ -105,7 +128,21 @@ class FastCalvoClassifier(RodanTask):
             model_paths = [background_model]
 
             for i in range(input_ports):
-                model_paths.append(inputs['Adjustable models'][i]['resource_path'])
+                model_paths.append(inputs['Model %d' % i][0]['resource_path'])
+
+            switch = {
+                0: 'Background',
+                1: 'Layer 0',
+                2: 'Layer 1',
+                3: 'Layer 2',
+                4: 'Layer 3',
+                5: 'Layer 4',
+                6: 'Layer 5',
+                7: 'Layer 6',
+                8: 'Layer 7',
+                9: 'Layer 8',
+                10: 'Layer 9',
+            }
 
             for idx, _ in enumerate(inputs['Image']):
                 # Process
@@ -130,10 +167,10 @@ class FastCalvoClassifier(RodanTask):
                     b_channel, g_channel, r_channel = cv2.split(original_masked)
                     original_masked_alpha = cv2.merge((b_channel, g_channel, r_channel, alpha_channel))
 
-                    if id_label == 0:
-                        port = 'Background'
-                    else:
-                        port = 'Layers'
+                    # if id_label == 0:
+                    #     port = 'Background'
+                    # else:
+                    #     port = 'Layer'
                     # elif id_label == 1:
                     #     port = 'Music symbol'
                     # elif id_label == 2:
@@ -141,9 +178,9 @@ class FastCalvoClassifier(RodanTask):
                     # elif id_label == 3:
                     #     port = 'Text'
 
-                    if port in outputs:
-                        cv2.imwrite(outputs[port][idx]['resource_path']+'.png', original_masked_alpha)
-                        os.rename(outputs[port][idx]['resource_path']+'.png', outputs[port][idx]['resource_path'])
+                    if switch[id_label] in outputs:
+                        cv2.imwrite(outputs[switch[id_label]][idx]['resource_path']+'.png', original_masked_alpha)
+                        os.rename(outputs[switch[id_label]][idx]['resource_path']+'.png', outputs[switch[id_label]][idx]['resource_path'])
 
             return True
         finally:
