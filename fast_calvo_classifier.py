@@ -6,6 +6,7 @@
 # Core
 import collections
 import logging
+# import json
 import os
 import sys
 
@@ -113,8 +114,9 @@ class FastCalvoClassifier(RodanTask):
             # Inner configuration
             mode = 'logical'
 
-            input_ports = len([x for x in outputs if x[:5] == 'Model'])
-            output_ports = len([x for x in inputs if x[:5] == 'Layer'])
+            # Fail early if the number of ports doesn't match.
+            input_ports = len([x for x in inputs if x[:5] == 'Model'])
+            output_ports = len([x for x in outputs if x[:5] == 'Layer'])
             if input_ports != output_ports:
                 raise Exception(
                     'The number of input layers "Model" does not match the number of'
@@ -123,13 +125,13 @@ class FastCalvoClassifier(RodanTask):
 
             # Ports
             background_model = inputs['Background model'][0]['resource_path']
-            # symbol_model = inputs['Symbol model'][0]['resource_path']
-            # model_paths = [background_model, symbol_model]
             model_paths = [background_model]
 
+            # Populate optional ports
             for i in range(input_ports):
-                model_paths.append(inputs['Model %d' % i][0]['resource_path'])
+                model_paths += [inputs['Model %d' % i][0]['resource_path']]
 
+            # Simulate a switch statement, instead of a series of ifs
             switch = {
                 0: 'Background',
                 1: 'Layer 0',
@@ -144,11 +146,24 @@ class FastCalvoClassifier(RodanTask):
                 10: 'Layer 9',
             }
 
+            # status = {
+            #     "inputs": inputs,
+            #     "outputs": outputs,
+            #     "input_ports": input_ports,
+            #     "output_ports": output_ports,
+            #     "input_": [x for x in inputs if x[:5] == "Model"],
+            #     "output_": [x for x in outputs if x[:5] == "Layer"],
+            #     "len_model_paths": len(model_paths),
+            #     "model_paths": model_paths,
+            #     "ports": []
+            # }
+
+            # Image input is a list of images, you can classify a list of images and this iterates on each image.
             for idx, _ in enumerate(inputs['Image']):
+
                 # Process
                 image_filepath = inputs['Image'][idx]['resource_path']
                 image = cv2.imread(image_filepath, True)
-
                 analyses = recognition.process_image_msae(image, model_paths, height, width, mode = mode)
 
                 for id_label, _ in enumerate(model_paths):
@@ -167,21 +182,17 @@ class FastCalvoClassifier(RodanTask):
                     b_channel, g_channel, r_channel = cv2.split(original_masked)
                     original_masked_alpha = cv2.merge((b_channel, g_channel, r_channel, alpha_channel))
 
-                    # if id_label == 0:
-                    #     port = 'Background'
-                    # else:
-                    #     port = 'Layer'
-                    # elif id_label == 1:
-                    #     port = 'Music symbol'
-                    # elif id_label == 2:
-                    #     port = 'Staff lines'
-                    # elif id_label == 3:
-                    #     port = 'Text'
-
+                    # status["ports"].append(
+                    #     {
+                    #         "switch": switch[id_label],
+                    #         "path": outputs[switch[id_label]][idx]['resource_path'],
+                    #     }
+                    # )
                     if switch[id_label] in outputs:
                         cv2.imwrite(outputs[switch[id_label]][idx]['resource_path']+'.png', original_masked_alpha)
                         os.rename(outputs[switch[id_label]][idx]['resource_path']+'.png', outputs[switch[id_label]][idx]['resource_path'])
 
+            # raise Exception(json.dumps(status, indent=2))
             return True
         finally:
             sys.stdout, sys.stderr = oldouts
