@@ -83,7 +83,7 @@ class CalvoTrainer:
 
             for i in range(1, input_ports):
                 file_obj = cv2.imread(
-                    inputs["rgba PNG - Layer {layer_num}".format(layer_num=i)][idx][
+                    self.inputs["rgba PNG - Layer {layer_num}".format(layer_num=i)][idx][
                         "resource_path"
                     ],
                     cv2.IMREAD_UNCHANGED,
