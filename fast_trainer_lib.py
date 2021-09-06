@@ -9,7 +9,6 @@ import sys
 import cv2
 import numpy as np
 import training_engine_sae as training
-import pdb
 
 
 class CalvoTrainer:
@@ -83,9 +82,9 @@ class CalvoTrainer:
 
             for i in range(1, input_ports):
                 file_obj = cv2.imread(
-                    self.inputs["rgba PNG - Layer {layer_num}".format(layer_num=i)][idx][
-                        "resource_path"
-                    ],
+                    self.inputs["rgba PNG - Layer {layer_num}".format(layer_num=i)][
+                        idx
+                    ]["resource_path"],
                     cv2.IMREAD_UNCHANGED,
                 )
                 file_mask = file_obj[:, :, TRANSPARENCY] == 255
