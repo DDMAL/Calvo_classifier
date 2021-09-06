@@ -8,7 +8,11 @@ import os
 import sys
 import cv2
 import numpy as np
-import training_engine_sae as training
+
+try:
+    import training_engine_sae as training
+except Exception:
+    import rodan.jobs.Calvo_classifier.training_engine_sae as training
 
 
 class CalvoTrainer:
