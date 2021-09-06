@@ -113,3 +113,8 @@ class CalvoTrainer:
         )
 
         print("Finishing the Fast CM trainer job.")
+        for i in range(input_ports):
+            os.rename(
+                output_models_path[str(i)],
+                self.outputs["Model " + str(i)][0]["resource_path"],
+            )
